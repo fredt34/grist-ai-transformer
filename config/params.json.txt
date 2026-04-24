@@ -1,0 +1,7 @@
+Créer un config.json avec
+{
+  "ai_api_url": "https://api.openai.com/v1/responses",
+  "ai_api_model": "gpt-5.4",  // ou autre modèle
+  "ai_api_key": "sk_VOTRE_CLE",
+  "temperature": 0.2 // facultatif
+}

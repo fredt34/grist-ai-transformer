@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Transformer</title>
+  <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 13px;
+      margin: 8px;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    #status-container {
+      display: flex;
+      align-items: center;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      background: white;
+    }
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #3498db;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 10px;
+      display: none;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    
+    .status-text { font-weight: 500; }
+    .error { color: #d32f2f; }
+    .success { color: #388e3c; }
+    .idle { color: #666; }
+
+    #debug-log {
+      margin-top: 8px;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      background: #fff;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      white-space: pre-wrap;
+      max-height: 240px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="status-container">
+    <div id="spinner" class="spinner"></div>
+    <div id="status-message" class="status-text idle">En attente d'une modification...</div>
+  </div>
+  <pre id="debug-log">[debug] Widget initialisé 30
+</pre>
+
+  <script>
+    const CONFIG_TABLE_NAME = 'Config';
+    const CONFIG_PARAM_COLUMN_NAME = 'Param';
+    const CONFIG_VALUE_COLUMN_NAME = 'Value';
+    const CONFIG_PROMPT_PARAM_NAME = 'GRIST_AI_TRANSFORMER_PROMPT';
+
+    grist.ready({
+      requiredAccess: 'full',
+      columns: [
+        'Source',
+        'Processed'
+      ]
+    });
+
+    const statusMsg = document.getElementById('status-message');
+    const spinner = document.getElementById('spinner');
+    const debugLog = document.getElementById('debug-log');
+    const DEBUG = false; // Mettre à true pour activer les logs détaillés
+
+    function safeStringify(value) {
+      try {
+        return JSON.stringify(value, null, 2);
+      } catch (e) {
+        return String(value);
+      }
+    }
+
+    function logDebug(label, payload) {
+      if (!DEBUG) debugLog.style.display = 'none';
+      if (!DEBUG) return;
+      const ts = new Date().toISOString();
+      const body = payload === undefined ? '' : `\n${safeStringify(payload)}`;
+      const line = `[${ts}] ${label}${body}\n`;
+      console.log(label, payload);
+      debugLog.textContent += line;
+      debugLog.scrollTop = debugLog.scrollHeight;
+    }
+
+    function updateStatus(text, type) {
+      statusMsg.innerText = text;
+      statusMsg.className = 'status-text ' + type;
+      spinner.style.display = (type === 'processing') ? 'block' : 'none';
+    }
+
+    function getColumnValues(tableData, columnName) {
+      if (Array.isArray(tableData?.[columnName])) {
+        return tableData[columnName];
+      }
+      if (Array.isArray(tableData?.columns?.[columnName])) {
+        return tableData.columns[columnName];
+      }
+      return [];
+    }
+
+    async function loadPromptFromConfigTable() {
+      const configTable = await grist.docApi.fetchTable(CONFIG_TABLE_NAME);
+      const paramValues = getColumnValues(configTable, CONFIG_PARAM_COLUMN_NAME);
+      const valueValues = getColumnValues(configTable, CONFIG_VALUE_COLUMN_NAME);
+
+      const index = paramValues.findIndex(param => String(param).trim() === CONFIG_PROMPT_PARAM_NAME);
+      if (index < 0) {
+        throw new Error(`Paramètre ${CONFIG_PROMPT_PARAM_NAME} introuvable dans ${CONFIG_TABLE_NAME}`);
+      }
+
+      const prompt = valueValues[index];
+      if (!prompt || !String(prompt).trim()) {
+        throw new Error(`Valeur vide pour ${CONFIG_PROMPT_PARAM_NAME} dans ${CONFIG_TABLE_NAME}`);
+      }
+
+      return String(prompt);
+    }
+
+    // Cette fonction est appelée à chaque fois que la sélection ou une donnée change
+    grist.onRecord(async (record, mappings) => {
+      logDebug('onRecord triggered', { record, mappings });
+
+      // 1. Extraction des colonnes mappées (utilise le nom réel ou le mapping Grist)
+      const mapped = grist.mapColumnNames(record, { mappings });
+      if (!mapped) {
+        logDebug('mapped record is null/undefined');
+        updateStatus("Colonnes non configurées dans le widget", "error");
+        return;
+      }
+      logDebug('mapped values', mapped);
+      const sourceData = mapped.Source;
+      const processedData = mapped.Processed;
+
+      // 2. Condition de déclenchement : 
+      //    Il y a du texte en Source ET le champ Processed est encore vide
+      //    Cela évite une boucle infinie après l'écriture du résultat.
+      if (sourceData && !processedData) {
+        updateStatus("L'IA traite le texte...", "processing");
+
+        try {
+          const prompt = await loadPromptFromConfigTable();
+          logDebug('prompt loaded from Config', { promptPreview: prompt.slice(0, 120) });
+
+          // 3. Appel à votre API FastAPI (via le proxy Caddy)
+          // On suppose que l'API est sur le même domaine sous /api/
+          const requestPayload = {
+            text: sourceData,
+            prompt
+          };
+          logDebug('request payload -> /api/process', requestPayload);
+
+          const response = await fetch("/api/process", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestPayload)
+          });
+
+          const rawText = await response.text();
+          logDebug('raw response', {
+            status: response.status,
+            ok: response.ok,
+            body: rawText
+          });
+
+          if (!response.ok) throw new Error(`Erreur API: ${response.status}`);
+
+          let data;
+          try {
+            data = JSON.parse(rawText);
+          } catch (e) {
+            throw new Error("Réponse API non JSON: " + rawText);
+          }
+          logDebug('parsed response json', data);
+
+          if (data.processed_text) {
+            // 4. Enregistrement du résultat dans Grist
+            if (!record?.id) {
+              throw new Error("Impossible de déterminer la ligne Grist (record.id manquant)");
+            }
+
+            const processedColId = (typeof mappings?.Processed === 'string' && mappings.Processed)
+              ? mappings.Processed
+              : 'Processed';
+            const updatePayload = {
+              id: record.id,
+              fields: { [processedColId]: data.processed_text }
+            };
+            logDebug('selectedTable.update payload', updatePayload);
+
+            await grist.selectedTable.update(updatePayload);
+            logDebug('selectedTable.update success');
+
+            updateStatus("Transformation terminée !", "success");
+          } else {
+            throw new Error("Réponse vide de l'IA");
+          }
+
+        } catch (error) {
+          logDebug('caught error', { message: error?.message, stack: error?.stack, error });
+          updateStatus("Erreur : " + error.message, "error");
+        }
+      } else if (!sourceData) {
+        updateStatus("Prêt (En attente de texte Source)", "idle");
+      } else if (processedData) {
+        updateStatus("Texte déjà traité", "success");
+      }
+    });
+  </script>
+</body>
+</html>

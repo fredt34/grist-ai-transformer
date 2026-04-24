@@ -1,0 +1,28 @@
+grist-ai-transformer.cpvo.org {
+    root * /var/www/grist-ai-transformer
+
+    handle_path /api/* {
+        reverse_proxy 127.0.0.1:8001
+    }
+
+    # Grist Plugin (new)
+    handle /grist-plugin/* {
+        file_server
+
+        # CORS headers
+#        header {
+#            Access-Control-Allow-Origin *
+#            Access-Control-Allow-Methods "GET, POST, OPTIONS"
+#            Access-Control-Allow-Headers "Content-Type"
+#        }
+
+        # Handle OPTIONS requests
+#        @options method OPTIONS
+#        respond @options 204
+    }
+
+    handle {
+        import my_standard
+        file_server
+    }
+}

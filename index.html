@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grist AI Transformer — Plugin Grist de transformation de texte par IA</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --accent: #2563eb;
+      --accent-dark: #1d4ed8;
+      --surface: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --muted: #64748b;
+      --code-bg: #1e293b;
+      --code-fg: #e2e8f0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    /* ── Nav ── */
+    header {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    nav {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+
+    .logo span { color: var(--text); }
+
+    nav ul {
+      display: flex;
+      list-style: none;
+      gap: 1.75rem;
+    }
+
+    nav a {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover { color: var(--accent); }
+
+    /* ── Hero ── */
+    .hero {
+      background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #7c3aed 100%);
+      color: white;
+      padding: 5rem 1.5rem 4.5rem;
+      text-align: center;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 99px;
+      padding: 0.25rem 0.9rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 1rem;
+      line-height: 1.15;
+    }
+
+    .hero p {
+      font-size: 1.15rem;
+      opacity: 0.85;
+      max-width: 620px;
+      margin: 0 auto 2rem;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 0.7rem 1.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+
+    .btn-primary { background: white; color: var(--accent-dark); }
+    .btn-outline { background: transparent; color: white; border: 2px solid rgba(255,255,255,0.6); margin-left: 0.75rem; }
+
+    /* ── Sections ── */
+    section { max-width: 1100px; margin: 0 auto; padding: 4rem 1.5rem; }
+
+    h2 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.5px;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      font-size: 1rem;
+    }
+
+    /* ── Architecture ── */
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 2.5rem 0;
+    }
+
+    .arch-step {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.4rem;
+      text-align: center;
+      min-width: 130px;
+    }
+
+    .arch-step .icon { font-size: 1.75rem; margin-bottom: 0.35rem; }
+    .arch-step .label { font-weight: 600; font-size: 0.9rem; color: var(--text); }
+    .arch-step .sublabel { font-size: 0.75rem; color: var(--muted); margin-top: 0.1rem; }
+
+    .arch-arrow {
+      font-size: 1.3rem;
+      color: var(--muted);
+      padding: 0 0.4rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Cards grid ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.5rem;
+    }
+
+    .card-icon { font-size: 1.75rem; margin-bottom: 0.75rem; }
+    .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .card p { font-size: 0.9rem; color: var(--muted); }
+
+    /* ── Installation steps ── */
+    .steps { display: flex; flex-direction: column; gap: 2rem; }
+
+    .step {
+      display: grid;
+      grid-template-columns: 2.5rem 1fr;
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .step-num {
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .step p { font-size: 0.9rem; color: var(--muted); margin-bottom: 0.75rem; }
+
+    /* ── Code blocks ── */
+    pre {
+      background: var(--code-bg);
+      color: var(--code-fg);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-size: 0.82rem;
+      overflow-x: auto;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    }
+
+    p code, li code {
+      background: #e2e8f0;
+      color: var(--accent-dark);
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+      font-size: 0.85em;
+    }
+
+    /* ── Config table ── */
+    .config-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .config-table th, .config-table td { padding: 0.7rem 1rem; border: 1px solid var(--border); text-align: left; }
+    .config-table th { background: #f1f5f9; font-weight: 600; }
+    .config-table td:first-child code { color: var(--accent-dark); }
+
+    /* ── Security banner ── */
+    .security-banner {
+      background: #fef9c3;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+
+    .security-banner .icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+    /* ── Divider ── */
+    hr { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      background: var(--card);
+      text-align: center;
+      padding: 2rem 1.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    footer a { color: var(--accent); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <nav>
+      <div class="logo">Grist <span>AI Transformer</span></div>
+      <ul>
+        <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+        <li><a href="#securite">Sécurité</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- ── Hero ── -->
+  <div class="hero">
+    <div class="hero-tag">Plugin Grist · FastAPI · IA</div>
+    <h1>Transformez vos textes dans Grist<br>avec l'IA en un clic</h1>
+    <p>Grist AI Transformer est un widget Custom Grist connecté à une API FastAPI. Le prompt est lu depuis une table <code>Config</code> du document Grist, puis appliqué automatiquement aux données texte.</p>
+    <a href="#installation" class="btn btn-primary">Installer</a>
+    <a href="#architecture" class="btn btn-outline">Voir l'architecture</a>
+  </div>
+
+  <!-- ── Fonctionnalités ── -->
+  <section id="fonctionnalites">
+    <h2>Fonctionnalités</h2>
+    <p class="section-sub">Des transformations configurables, déclenchées automatiquement depuis Grist.</p>
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">🕵️</div>
+        <h3>Anonymisation</h3>
+        <p>Remplace noms, adresses, e-mails et données sensibles par des pseudonymes neutres pour objectiver les décisions en commission.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📝</div>
+        <h3>Résumé automatique</h3>
+        <p>Condense les textes longs en trois points clés au format Markdown, directement dans la colonne <code>Processed</code>.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚡</div>
+        <h3>Déclenchement réactif</h3>
+        <p>Le widget surveille la colonne <code>Source</code> via <code>grist.onRecord</code> et n'appelle l'API que lorsqu'une valeur est présente et non encore traitée.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔌</div>
+        <h3>Prompt piloté par table Grist</h3>
+        <p>Le widget lit le prompt dans la table <code>Config</code> (colonnes <code>Param</code> / <code>Value</code>) avec le paramètre <code>GRIST_AI_TRANSFORMER_PROMPT</code>.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <h3>Clés cachées côté serveur</h3>
+        <p>Les clés API et URL internes ne transitent jamais par le frontend ; elles sont stockées dans <code>config/params.json</code> sur le serveur.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <h3>Compatible OpenAI / Llama</h3>
+        <p>Fonctionne avec n'importe quel endpoint compatible OpenAI Responses API — modèle interne ou cloud.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ── Architecture ── -->
+  <section id="architecture">
+    <h2>Architecture</h2>
+    <p class="section-sub">Cinq composants qui collaborent de bout en bout.</p>
+
+    <div class="arch-flow">
+      <div class="arch-step">
+        <div class="icon">📊</div>
+        <div class="label">Grist</div>
+        <div class="sublabel">Custom Widget</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-step">
+        <div class="icon">🔀</div>
+        <div class="label">Caddy</div>
+        <div class="sublabel">HTTPS + Proxy</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-step">
+        <div class="icon">⚙️</div>
+        <div class="label">FastAPI</div>
+        <div class="sublabel">Backend Python</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-step">
+        <div class="icon">🤖</div>
+        <div class="label">LLM</div>
+        <div class="sublabel">Llama / OpenAI</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-step">
+        <div class="icon">✅</div>
+        <div class="label">Grist</div>
+        <div class="sublabel">Colonne Processed</div>
+      </div>
+    </div>
+
+    <div class="card-grid" style="margin-top:1.5rem">
+      <div class="card">
+        <h3>1 · Grist (widget)</h3>
+        <p>Le fichier <code>grist-plugin/index.html</code> s'abonne aux changements de ligne via <code>grist.onRecord</code>. Quand <code>Source</code> est rempli et <code>Processed</code> est vide, il envoie une requête <code>POST /api/process</code>.</p>
+      </div>
+      <div class="card">
+        <h3>2 · Caddy</h3>
+        <p>Sert le frontend en HTTPS et fait office de reverse-proxy vers <code>localhost:8000</code> pour toutes les routes <code>/api/*</code>, sans exposer l'API directement.</p>
+      </div>
+      <div class="card">
+        <h3>3 · FastAPI (<code>main.py</code>)</h3>
+        <p>Reçoit <code>text</code> et <code>prompt</code> depuis le widget, puis appelle le LLM via <code>httpx</code>.</p>
+      </div>
+      <div class="card">
+        <h3>4 · LLM</h3>
+        <p>N'importe quel modèle exposant l'API <code>POST /responses</code> compatible OpenAI. La clé, l'URL et le nom du modèle sont dans <code>config/params.json</code>.</p>
+      </div>
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ── Installation ── -->
+  <section id="installation">
+    <h2>Installation</h2>
+    <p class="section-sub">Quatre étapes pour démarrer depuis zéro.</p>
+
+    <div class="steps">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div>
+          <h3>Backend Python (FastAPI)</h3>
+          <p>Installez les dépendances puis démarrez le serveur :</p>
+          <pre><code>pip install fastapi uvicorn httpx python-multipart
+uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div>
+          <h3>Paramètres (<code>config/params.json</code>)</h3>
+          <p>Créez ce fichier avec vos identifiants IA (jamais versionnés) :</p>
+          <pre><code>{
+  "ai_api_url": "https://api.openai.com/v1/responses",
+  "ai_api_model": "gpt-5.4",
+  "ai_api_key": "sk-proj-...",
+  "temperature": 0.2
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div>
+          <h3>Proxy Caddy</h3>
+          <p>Ajoutez ce bloc à votre <code>Caddyfile</code> pour servir le frontend et proxifier l'API :</p>
+          <pre><code>votre-plugin.entreprise.com {
+    root * ./frontend
+    file_server
+    handle_path /api/* {
+        reverse_proxy localhost:8000
+    }
+}</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div>
+          <h3>Widget dans Grist</h3>
+          <p>Dans votre document Grist :</p>
+          <ol style="margin-left:1.25rem; font-size:0.9rem; color:var(--muted); display:flex; flex-direction:column; gap:0.3rem; margin-top:0.5rem">
+            <li>Ajoutez un widget <strong>Custom</strong> à votre table.</li>
+            <li>URL : <code>https://votre-plugin.entreprise.com/grist-plugin/index.html</code></li>
+            <li>Access Level : <strong>Full Access</strong> (nécessaire pour écrire dans <code>Processed</code>).</li>
+            <li>Mappez les colonnes <code>Source</code> et <code>Processed</code> dans les options du widget.</li>
+            <li>Créez une table <code>Config</code> avec les colonnes <code>Param</code> et <code>Value</code>.</li>
+            <li>Ajoutez la ligne <code>Param = GRIST_AI_TRANSFORMER_PROMPT</code> avec le prompt complet dans <code>Value</code>.</li>
+          </ol>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ── Configuration ── -->
+  <section id="configuration">
+    <h2>Configuration des transformations</h2>
+    <p class="section-sub">Le prompt est défini dans la table <code>Config</code> du document Grist.</p>
+
+    <pre><code>Table: Config
+Colonnes:
+  - Param
+  - Value
+
+Ligne requise:
+  Param = GRIST_AI_TRANSFORMER_PROMPT
+  Value = &lt;votre prompt complet&gt;</code></pre>
+
+    <p style="margin-top:1rem; font-size:0.9rem; color:var(--muted)">Le prompt est appliqué au niveau du module (widget) pour toutes les lignes traitées.</p>
+
+    <p style="margin-top:1.5rem; margin-bottom:1rem; font-size:0.9rem; color:var(--muted)">Colonnes Grist requises :</p>
+    <table class="config-table">
+      <thead>
+        <tr><th>Colonne</th><th>Type</th><th>Rôle</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>Source</code></td><td>Texte / Markdown</td><td>Texte d'entrée à transformer</td></tr>
+        <tr><td><code>Processed</code></td><td>Texte / Markdown</td><td>Résultat écrit par le widget</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <hr>
+
+  <!-- ── Sécurité ── -->
+  <section id="securite">
+    <h2>Sécurité</h2>
+    <p class="section-sub">Bonnes pratiques recommandées pour un déploiement en production.</p>
+
+    <div style="display:flex; flex-direction:column; gap:1rem">
+      <div class="security-banner">
+        <span class="icon">🔑</span>
+        <div><strong>Clés hors du dépôt :</strong> ajoutez <code>config/params.json</code> à <code>.gitignore</code>. Ne versionnez jamais votre clé API ni l'URL interne du LLM.</div>
+      </div>
+      <div class="security-banner">
+        <span class="icon">🌐</span>
+        <div><strong>Filtrage IP :</strong> utilisez la directive <code>forward_auth</code> ou un <code>@internal</code> matcher Caddy pour restreindre l'accès au widget aux seuls utilisateurs autorisés.</div>
+      </div>
+      <div class="security-banner">
+        <span class="icon">🛡️</span>
+        <div><strong>HTTPS obligatoire :</strong> Caddy gère automatiquement TLS via Let's Encrypt. N'exposez jamais le backend FastAPI directement sur Internet.</div>
+      </div>
+      <div class="security-banner">
+        <span class="icon">✅</span>
+        <div><strong>Access Level Grist :</strong> le widget demande <em>Full Access</em> uniquement pour écrire dans la colonne <code>Processed</code>. Vérifiez que personne d'autre n'a accès à la table si les données sont sensibles.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>Grist AI Transformer &mdash; Plugin Grist de transformation de texte par IA &nbsp;·&nbsp; <a href="https://github.com/grist-ai-transformer/grist-ai-transformer">GitHub</a> &nbsp;·&nbsp; Licence MIT</p>
+  </footer>
+
+</body>
+</html>
