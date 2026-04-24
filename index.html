@@ -449,12 +449,22 @@
   <!-- ── Installation ── -->
   <section id="installation">
     <h2>Installation</h2>
-    <p class="section-sub">Quatre étapes pour démarrer depuis zéro.</p>
+    <p class="section-sub">Cinq étapes pour démarrer depuis zéro.</p>
 
     <div class="steps">
 
       <div class="step">
         <div class="step-num">1</div>
+        <div>
+          <h3>Récupérer le projet depuis GitHub</h3>
+          <p>Clonez le dépôt officiel puis placez-vous dans le dossier :</p>
+          <pre><code>git clone https://github.com/fredt34/grist-ai-transformer
+cd grist-ai-transformer</code></pre>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
         <div>
           <h3>Backend Python (FastAPI)</h3>
           <p>Installez les dépendances puis démarrez le serveur :</p>
@@ -464,7 +474,7 @@ uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
       </div>
 
       <div class="step">
-        <div class="step-num">2</div>
+        <div class="step-num">3</div>
         <div>
           <h3>Paramètres (<code>config/params.json</code>)</h3>
           <p>Créez ce fichier avec vos identifiants IA (jamais versionnés) :</p>
@@ -478,7 +488,7 @@ uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
       </div>
 
       <div class="step">
-        <div class="step-num">3</div>
+        <div class="step-num">4</div>
         <div>
           <h3>Proxy Caddy</h3>
           <p>Ajoutez ce bloc à votre <code>Caddyfile</code> pour servir le frontend et proxifier l'API :</p>
@@ -493,7 +503,7 @@ uvicorn main:app --host 127.0.0.1 --port 8000</code></pre>
       </div>
 
       <div class="step">
-        <div class="step-num">4</div>
+        <div class="step-num">5</div>
         <div>
           <h3>Widget dans Grist</h3>
           <p>Dans votre document Grist :</p>
@@ -569,7 +579,7 @@ Ligne requise:
   </section>
 
   <footer>
-    <p>Grist AI Transformer &mdash; Plugin Grist de transformation de texte par IA &nbsp;·&nbsp; <a href="https://github.com/grist-ai-transformer/grist-ai-transformer">GitHub</a> &nbsp;·&nbsp; Licence MIT</p>
+    <p>Grist AI Transformer &mdash; Plugin Grist de transformation de texte par IA &nbsp;·&nbsp; <a href="https://github.com/fredt34/grist-ai-transformer">GitHub</a> &nbsp;·&nbsp; Licence MIT</p>
   </footer>
 
 </body>

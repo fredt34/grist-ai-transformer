@@ -8,7 +8,14 @@
 
 ## 🚀 Installation
 
-### 1. Backend (FastAPI)
+### 1. Cloner le dépôt GitHub
+
+```bash
+git clone https://github.com/fredt34/grist-ai-transformer
+cd grist-ai-transformer
+```
+
+### 2. Backend (FastAPI)
 Installez les dépendances :
 
 ```bash
@@ -21,7 +28,7 @@ Lancez le serveur :
 uvicorn main:app --host 127.0.0.1 --port 8000
 ```
 
-### 2. Paramètres globaux (`config/params.json`)
+### 3. Paramètres globaux (`config/params.json`)
 
 Créez le fichier suivant (non versionné) :
 
@@ -34,9 +41,7 @@ Créez le fichier suivant (non versionné) :
 }
 ```
 
-> La `temperature` est désormais définie ici (et non dans les fichiers de prompt).
-
-### 3. Configuration du prompt dans Grist
+### 4. Configuration du prompt dans Grist
 
 Créez une table `Config` avec deux colonnes :
 
@@ -50,7 +55,7 @@ Ajoutez une ligne :
 
 Le prompt défini dans cette ligne est appliqué par le widget.
 
-### 4. Proxy (Caddy)
+### 5. Proxy (Caddy)
 
 Ajoutez ceci à votre Caddyfile pour lier le frontend et l'API :
 
