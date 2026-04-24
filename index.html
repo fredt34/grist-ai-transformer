@@ -186,6 +186,36 @@
     .card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
     .card p { font-size: 0.9rem; color: var(--muted); }
 
+    /* ── Exemple ── */
+    .example-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .example-media {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+
+    .example-media img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: block;
+    }
+
+    .example-media figcaption {
+      margin-top: 0.6rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
     /* ── Installation steps ── */
     .steps { display: flex; flex-direction: column; gap: 2rem; }
 
@@ -279,6 +309,7 @@
     <nav>
       <div class="logo">Grist <span>AI Transformer</span></div>
       <ul>
+        <li><a href="#exemple">Exemple</a></li>
         <li><a href="#fonctionnalites">Fonctionnalités</a></li>
         <li><a href="#architecture">Architecture</a></li>
         <li><a href="#installation">Installation</a></li>
@@ -297,20 +328,44 @@
     <a href="#architecture" class="btn btn-outline">Voir l'architecture</a>
   </div>
 
+  <!-- ── Exemple ── -->
+  <section id="exemple">
+    <h2>Exemple</h2>
+    <p class="section-sub">Un aperçu du prompt utilisé et du rendu obtenu dans Grist après transformation.</p>
+    <div class="example-grid">
+      <figure class="example-media">
+        <img src="prompt.png" alt="Capture du prompt de transformation (prompt.png)">
+        <figcaption><code>prompt.png</code> — Prompt configuré dans la table <code>Config</code>.</figcaption>
+      </figure>
+      <figure class="example-media">
+        <img src="exemple.png" alt="Capture du résultat transformé dans Grist (exemple.png)">
+        <figcaption><code>exemple.png</code> — Résultat obtenu dans la colonne <code>Processed</code>.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <hr>
+
   <!-- ── Fonctionnalités ── -->
   <section id="fonctionnalites">
     <h2>Fonctionnalités</h2>
-    <p class="section-sub">Des transformations configurables, déclenchées automatiquement depuis Grist.</p>
+    <p class="section-sub">Des transformations configurables à volonté, déclenchées automatiquement depuis Grist.</p>
     <div class="card-grid">
       <div class="card">
         <div class="card-icon">🕵️</div>
-        <h3>Anonymisation</h3>
-        <p>Remplace noms, adresses, e-mails et données sensibles par des pseudonymes neutres pour objectiver les décisions en commission.</p>
+        <h3>Anonymisation, caviardage...</h3>
+        <p>Votre prompt permet de remplacer noms, adresses, e-mails et données sensibles par des pseudonymes neutres pour objectiver les décisions en commission.</p>
       </div>
       <div class="card">
-        <div class="card-icon">📝</div>
-        <h3>Résumé automatique</h3>
-        <p>Condense les textes longs en trois points clés au format Markdown, directement dans la colonne <code>Processed</code>.</p>
+        <div class="card-icon">🛡️/div>
+        <h3>Protection des données</h3>
+        <p>Les spécialistes du service et les instructeurs des dossiers ont accès à l'ensemble des informations sensibles du dossier. Les décideurs, commissions... ne voient que les informations anonymisées et pertinentes pour leur prise de décision.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔌</div>
+        <h3>Prompt défini en paramètre</h3>
+        <p>Le widget lit le prompt dans la table <code>Config</code> (colonnes <code>Param</code> / <code>Value</code>) avec
+          le paramètre <code>GRIST_AI_TRANSFORMER_PROMPT</code>.</p>
       </div>
       <div class="card">
         <div class="card-icon">⚡</div>
@@ -318,19 +373,14 @@
         <p>Le widget surveille la colonne <code>Source</code> via <code>grist.onRecord</code> et n'appelle l'API que lorsqu'une valeur est présente et non encore traitée.</p>
       </div>
       <div class="card">
-        <div class="card-icon">🔌</div>
-        <h3>Prompt piloté par table Grist</h3>
-        <p>Le widget lit le prompt dans la table <code>Config</code> (colonnes <code>Param</code> / <code>Value</code>) avec le paramètre <code>GRIST_AI_TRANSFORMER_PROMPT</code>.</p>
-      </div>
-      <div class="card">
         <div class="card-icon">🔒</div>
-        <h3>Clés cachées côté serveur</h3>
-        <p>Les clés API et URL internes ne transitent jamais par le frontend ; elles sont stockées dans <code>config/params.json</code> sur le serveur.</p>
+        <h3>Sécurité</h3>
+        <p>Les clés API et URL internes sont cachées côté Serveur et ne transitent jamais par le frontend ; elles sont stockées dans <code>config/params.json</code> sur le serveur.</p>
       </div>
       <div class="card">
         <div class="card-icon">🔄</div>
         <h3>Compatible OpenAI / Llama</h3>
-        <p>Fonctionne avec n'importe quel endpoint compatible OpenAI Responses API — modèle interne ou cloud.</p>
+        <p>Fonctionne avec n'importe quel endpoint compatible OpenAI Responses API — modèle interne ou cloud, par paramétrage sur votre serveur.</p>
       </div>
     </div>
   </section>
